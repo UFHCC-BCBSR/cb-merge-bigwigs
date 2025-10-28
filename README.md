@@ -1,4 +1,4 @@
-# RM1Merged BigWigs for Deeptools Profile Plots
+# Merge BigWigs for Deeptools Profile Plots
 
 This repository contains scripts for merging ATAC-seq bigWig files by biological condition to prepare aggregate signal tracks for visualization with deeptools (`computeMatrix` and `plotProfile`/`plotHeatmap`).
 
