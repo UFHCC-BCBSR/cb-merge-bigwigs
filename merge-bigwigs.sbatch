@@ -14,6 +14,9 @@
 module purge
 module load ucsc
 
+############################################################
+### EDIT THIS SECTION AND LEAVE THE REST UNCHANGED #########
+############################################################
 # Set paths
 BIGWIG_DIR="/blue/cancercenter-dept/privapps/data/atac/RM1/RM1_ATACSEQ_Manuscript/BAMS/median_dmel"
 SAMPLE_INFO="/blue/cancercenter-dept/shared/RM1-mergedbigwigs-profile/RM1-CCI-HC-RAP-sampleinfo-spikein.csv"
@@ -21,6 +24,8 @@ OUTPUT_DIR="/blue/cancercenter-dept/shared/RM1-mergedbigwigs-profile/output/merg
 MERGED_SAMPLE_INFO="${OUTPUT_DIR}/merged-sample-info.csv"
 CHROM_SIZES="/orange/cancercenter-dept/GENOMES/GENOMES/references/Homo_sapiens/UCSC/GRCh38/Annotation/hg38.chrom.sizes"
 FILTER_FOR_AUTOSOMES=TRUE
+############################################################
+############################################################
 
 # Create output directory
 mkdir -p $OUTPUT_DIR
