@@ -72,7 +72,9 @@ echo "Merging ${#BIGWIG_LIST[@]} bigwigs..."
 bigWigMerge -threshold=-10000.0 "${BIGWIG_LIST[@]}" $BEDGRAPH
 
 # use awk to remove loci with 0 signal
-awk 'BEGIN{FS="\t"}{if ($4!=0) print $0}' $BEDGRAPH > ${BEDGRAPH}
+
+awk 'BEGIN{FS="\t"}{if ($4!=0) print $0}' $BEDGRAPH > ${BEDGRAPH}.tmp
+mv ${BEDGRAPH}.tmp $BEDGRAPH
 
 echo "Sorting bedGraph with ${SLURM_CPUS_PER_TASK} threads..."
 sort -k1,1 -k2,2n \
