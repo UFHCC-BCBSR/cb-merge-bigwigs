@@ -3,3 +3,4 @@ output/
 legacy/
 logs/
 merge-bigwigs-cpm.sbatch
+tss_*

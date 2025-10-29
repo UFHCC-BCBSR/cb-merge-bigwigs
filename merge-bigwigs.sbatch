@@ -20,6 +20,7 @@ SAMPLE_INFO="/blue/cancercenter-dept/shared/RM1-mergedbigwigs-profile/RM1-CCI-HC
 OUTPUT_DIR="/blue/cancercenter-dept/shared/RM1-mergedbigwigs-profile/output/merged-bigwigs-spikein"
 MERGED_SAMPLE_INFO="${OUTPUT_DIR}/merged-sample-info.csv"
 CHROM_SIZES="/orange/cancercenter-dept/GENOMES/GENOMES/references/Homo_sapiens/UCSC/GRCh38/Annotation/hg38.chrom.sizes"
+FILTER_FOR_AUTOSOMES=TRUE
 
 # Create output directory
 mkdir -p $OUTPUT_DIR
@@ -74,10 +75,14 @@ sort -k1,1 -k2,2n \
 
 mv ${BEDGRAPH}.sorted $BEDGRAPH
 
-echo "Filtering out chrEBV..."
-grep -v "^chrEBV" $BEDGRAPH | \
-  awk '{if ($1 ~ /^chr[0-9]+$/ || $1 == "chrX" || $1 == "chrY" || $1 == "chrM") print}' > ${BEDGRAPH}.filtered
-
+if [[ ${FILTER_FOR_AUTOSOMES} == TRUE ]]; then
+    echo "Filtering out chrEBV and non-autosomes..."
+    grep -v "^chrEBV" "$BEDGRAPH" | \
+        awk '$1 ~ /^chr[0-9]+$/' > "${BEDGRAPH}.filtered"
+else
+    echo "Retaining all chromosomes..."
+    mv "$BEDGRAPH" "${BEDGRAPH}.filtered"
+fi
 
 echo "Converting to bigWig..."
 bedGraphToBigWig ${BEDGRAPH}.filtered $CHROM_SIZES $MERGED_BIGWIG
