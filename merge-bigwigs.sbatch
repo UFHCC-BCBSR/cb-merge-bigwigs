@@ -69,14 +69,17 @@ BEDGRAPH="${TMPDIR}/${MERGED_NAME}.bedGraph"
 MERGED_BIGWIG="${OUTPUT_DIR}/${MERGED_NAME}.bigWig"
 
 echo "Merging ${#BIGWIG_LIST[@]} bigwigs..."
-bigWigMerge "${BIGWIG_LIST[@]}" $BEDGRAPH
+bigWigMerge -threshold=-10000.0 "${BIGWIG_LIST[@]}" $BEDGRAPH
+
+# use awk to remove loci with 0 signal
+awk 'BEGIN{FS="\t"}{if ($4!=0) print $0}' $BEDGRAPH > merged.${BEDGRAPH}
 
 echo "Sorting bedGraph with ${SLURM_CPUS_PER_TASK} threads..."
 sort -k1,1 -k2,2n \
     --parallel=${SLURM_CPUS_PER_TASK} \
     -S 100G \
     -T $TMPDIR \
-    $BEDGRAPH > ${BEDGRAPH}.sorted
+    merged.${BEDGRAPH} > ${BEDGRAPH}.sorted
 
 mv ${BEDGRAPH}.sorted $BEDGRAPH
 
