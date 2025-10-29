@@ -1,0 +1,106 @@
+---
+title: "Statistical Comparison of TSS Signal Between Groups"
+author: "Dr. Heather Kates"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+    code_folding: show
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, 
+                      fig.width = 12, fig.height = 8)
+```
+
+## Data Generation
+
+Per-gene TSS signal was extracted from spike-in normalized ATAC-seq bigWig files using deepTools `multiBigwigSummary BED-file`. This command quantifies read coverage at 62,700 gene TSS positions (GENCODE v44) across all individual replicates, producing a matrix with one row per gene and one column per sample. This enables statistical comparison of TSS accessibility distributions between experimental groups. Script is `/blue/cancercenter-dept/shared/RM1-mergedbigwigs-profile/multi-bigwig-summary.sbatch`
+
+```{r load-data}
+# Load the data
+data <- read.table("/blue/cancercenter-dept/shared/RM1-mergedbigwigs-profile/tss_scores_per_gene_individual.tab", 
+                   header=TRUE, sep="", comment.char="")
+
+# Check structure
+dim(data)  # Should be 62700 rows, ~40 columns
+colnames(data)
+
+# map columns to groups based on sample info
+# Load sample info to get group assignments
+sample_info <- read.csv("/blue/cancercenter-dept/shared/RM1-mergedbigwigs-profile/RM1-CCI-HC-RAP-sampleinfo-spikein.csv")
+head(sample_info)
+
+# Match columns to groups
+# Column names have .bw extension, sample_info has sample names
+hc_samples <- sample_info$sample[sample_info$group == "HC_all"]
+rap_d4_samples <- sample_info$sample[sample_info$group == "RAP_d4"]
+```
+
+## Step 1: Calculate mean per gene for each group
+
+For each gene/TSS, average the signal across all HC replicates → one HC value per gene
+For each gene/TSS, average the signal across all RAP_d4 replicates → one RAP_d4 value per gene
+
+```{r cal-means}
+# Calculate mean per gene for each group
+# Convert hyphens to dots to match R's column name conversion
+hc_cols <- gsub("-", ".", paste0(hc_samples, ".bw"))
+rap_d4_cols <- gsub("-", ".", paste0(rap_d4_samples, ".bw"))
+
+# Verify columns exist
+hc_cols <- hc_cols[hc_cols %in% colnames(data)]
+rap_d4_cols <- rap_d4_cols[rap_d4_cols %in% colnames(data)]
+
+cat("Found", length(hc_cols), "HC columns\n")
+cat("Found", length(rap_d4_cols), "RAP_d4 columns\n")
+
+# Calculate mean signal
+hc_signal <- rowMeans(data[, hc_cols], na.rm=TRUE)
+rap_d4_signal <- rowMeans(data[, rap_d4_cols], na.rm=TRUE)
+
+# Remove genes with NA or zero in both
+valid <- !is.na(hc_signal) & !is.na(rap_d4_signal) & (hc_signal > 0 | rap_d4_signal > 0)
+hc_signal <- hc_signal[valid]
+rap_d4_signal <- rap_d4_signal[valid]
+
+cat("\nTesting", length(hc_signal), "genes\n\n")
+```
+
+## Step 2: Statistical test
+
+"Across all genes, is there a systematic difference in TSS signal between HC and RAP_d4?"
+
+This tests whether the distribution of signal values differs between groups. We have ~62,000 genes, each with a mean HC value and a mean RAP_d4 value, and we're asking if those two distributions are significantly different.
+
+### A. T-test
+
+```{r t-test}
+# T-test
+t_result <- t.test(hc_signal, rap_d4_signal)
+print(t_result)
+```
+
+### B. non-parametric test
+
+```{r mann-whitney}
+# Mann-Whitney
+mw_result <- wilcox.test(hc_signal, rap_d4_signal)
+print(mw_result)
+```
+
+## Summary Statistics
+
+Number of genes tested: `r length(hc_signal)`
+
+**HC_all:**  
+Mean: `r round(mean(hc_signal), 2)`  
+Median: `r round(median(hc_signal), 2)`
+
+**RAP_d4:**  
+Mean: `r round(mean(rap_d4_signal), 2)`  
+Median: `r round(median(rap_d4_signal), 2)`
