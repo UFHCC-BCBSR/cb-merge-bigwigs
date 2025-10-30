@@ -2,7 +2,7 @@
 #SBATCH --job-name=merge_bigwigs_spikein
 #SBATCH --output=logs/merge_bigwigs_spikein_%A_%a.out
 #SBATCH --error=logs/merge_bigwigs_spikein_%A_%a.err
-#SBATCH --array=0-5
+#SBATCH --array=0-4 
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=120G
 #SBATCH --time=08:00:00
@@ -29,6 +29,11 @@ FILTER_FOR_AUTOSOMES=TRUE
 
 # Create output directory
 mkdir -p $OUTPUT_DIR
+
+# Initialize sample info file with header (only once)
+if ! [ -f "$MERGED_SAMPLE_INFO" ]; then
+    echo "sample,group,color,sample_label" > $MERGED_SAMPLE_INFO
+fi
 
 # Use blue storage for temp instead of default /tmp
 TMPDIR="${OUTPUT_DIR}/temp_${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
